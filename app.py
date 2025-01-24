@@ -50,9 +50,107 @@ def create_chatroom():
         db.session.add(new_chatroom)
         db.session.commit()
 
+        # Add the creator as a member of the new chatroom
+        new_member = ChatroomMembers(chatroom_id=new_chatroom.chatroom_id, profile_id=session['user_id'])
+        db.session.add(new_member)
+        db.session.commit()
+
         return redirect(url_for('chatrooms'))  # Redirect to chatrooms list after creation
 
     return render_template('create_chatroom.html')  # Render the form for GET requests
+
+
+
+@app.route('/chatrooms')
+def chatrooms():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    rooms = Chatroom.query.all()
+    return render_template('chatrooms.html', rooms=rooms)
+
+# [TK] - deprecated
+# @app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
+# def chatroom(room_id):
+#     if 'user_id' not in session:
+#         return redirect(url_for('login'))
+    
+#     room = Chatroom.query.get(room_id)
+#     messages = ChatroomMessages.query.filter_by(chatroom_id=room_id).all()
+    
+#     if request.method == 'POST':
+#         message_text = request.form['message']
+#         new_message = ChatroomMessages(
+#             chatroom_id=room_id,
+#             sent_by=session['user_id'],
+#             message=message_text,
+#             timestamp=datetime.now()
+#         )
+#         db.session.add(new_message)
+#         db.session.commit()
+    
+#     return render_template('chatroom.html', room=room, messages=messages)
+# [TK] - deprecated
+
+@app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
+def chatroom(room_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    room = Chatroom.query.get(room_id)
+    
+    # Query to fetch messages with sender's username and profile ID
+    messages = db.session.query(
+        ChatroomMessages.message,
+        ChatroomMessages.timestamp,
+        Profile.username,
+        Profile.profile_id
+    ).join(Profile, ChatroomMessages.sent_by == Profile.profile_id) \
+     .filter(ChatroomMessages.chatroom_id == room_id).all()
+    
+    if request.method == 'POST':
+        message_text = request.form['message']
+        new_message = ChatroomMessages(
+            chatroom_id=room_id,
+            sent_by=session['user_id'],
+            message=message_text,
+            timestamp=datetime.now()
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        return redirect(url_for('chatroom', room_id=room_id))
+
+    return render_template('chatroom.html', room=room, messages=messages)
+
+# Join a chatroom
+@app.route('/join_chatroom/<int:room_id>', methods=['POST'])
+def join_chatroom(room_id):
+    if 'user_id' not in session:  # Ensure the user is logged in
+        return redirect(url_for('login'))
+
+    # Check if the user is already a member
+    existing_member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=session['user_id']).first()
+    if not existing_member:
+        # Add the user to the ChatroomMembers table
+        new_member = ChatroomMembers(chatroom_id=room_id, profile_id=session['user_id'])
+        db.session.add(new_member)
+        db.session.commit()
+
+    return redirect(url_for('chatrooms'))  # Redirect to the list of chatrooms
+
+
+# Leave a chatroom
+@app.route('/leave_chatroom/<int:room_id>', methods=['POST'])
+def leave_chatroom(room_id):
+    if 'user_id' not in session:  # Ensure the user is logged in
+        return redirect(url_for('login'))
+
+    # Remove the user from the ChatroomMembers table
+    member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=session['user_id']).first()
+    if member:
+        db.session.delete(member)
+        db.session.commit()
+
+    return redirect(url_for('chatrooms'))  # Redirect to the list of chatrooms
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -77,34 +175,6 @@ def login():
             session['user_id'] = user.profile_id
             return redirect(url_for('chatrooms'))
     return render_template('login.html')
-
-@app.route('/chatrooms')
-def chatrooms():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    rooms = Chatroom.query.all()
-    return render_template('chatrooms.html', rooms=rooms)
-
-@app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
-def chatroom(room_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    room = Chatroom.query.get(room_id)
-    messages = ChatroomMessages.query.filter_by(chatroom_id=room_id).all()
-    
-    if request.method == 'POST':
-        message_text = request.form['message']
-        new_message = ChatroomMessages(
-            chatroom_id=room_id,
-            sent_by=session['user_id'],
-            message=message_text,
-            timestamp=datetime.now()
-        )
-        db.session.add(new_message)
-        db.session.commit()
-    
-    return render_template('chatroom.html', room=room, messages=messages)
 
 @app.route('/logout')
 def logout():

@@ -5,7 +5,21 @@
 <a href="{{ url_for('create_chatroom') }}">+ Create New Chatroom</a>
 <ul>
   {% for room in rooms %}
-      <li><a href="/chatroom/{{ room.chatroom_id }}">{{ room.chatroom_name }}</a></li>
-  {% endfor %}
+  <li>
+      <a href="/chatroom/{{ room.chatroom_id }}">{{ room.chatroom_name }}</a>
+      {% set member_ids = room.chatroom_members | map(attribute='profile_id') | list %}
+      {% if session['user_id'] in member_ids %}
+          <!-- User is already a member -->
+          <form action="{{ url_for('leave_chatroom', room_id=room.chatroom_id) }}" method="post" style="display:inline;">
+              <button type="submit">Leave</button>
+          </form>
+      {% else %}
+          <!-- User is not a member -->
+          <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}" method="post" style="display:inline;">
+              <button type="submit">Join</button>
+          </form>
+      {% endif %}
+  </li>
+{% endfor %}
 </ul>
 {% endblock %}
