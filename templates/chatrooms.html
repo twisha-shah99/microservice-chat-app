@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Chatrooms</h1>
+<a href="{{ url_for('create_chatroom') }}">+ Create New Chatroom</a>
+<ul>
+  {% for room in rooms %}
+      <li><a href="/chatroom/{{ room.chatroom_id }}">{{ room.chatroom_name }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

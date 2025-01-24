@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ room.chatroom_name }}</h1>
+<p>{{ room.description }}</p>
+
+<ul id="messages">
+  {% for message in messages %}
+      <li><strong>{{ message.sent_by }}:</strong> {{ message.message }} ({{ message.timestamp }})</li>
+  {% endfor %}
+</ul>
+
+<form method="post">
+  Message: <input type="text" name="message"><br>
+  <button type="submit">Send</button>
+</form>
+
+<a href="/chatrooms">Back to Chatrooms</a>
+{% endblock %}
