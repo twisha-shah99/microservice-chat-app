@@ -3,6 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from extensions import db
 
+# Adding an admin view
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -14,6 +18,17 @@ db.init_app(app)
 # Import models from models.py
 from models import Profile, Chatroom, ChatroomMembers, ChatroomMessages
 
+
+# -------- ADMIN SETUP --------
+# Initialize Flask-Admin
+admin = Admin(app, name='Chat App Admin', template_mode='bootstrap3')
+
+# Add views for each model
+admin.add_view(ModelView(Profile, db.session))
+admin.add_view(ModelView(Chatroom, db.session))
+admin.add_view(ModelView(ChatroomMembers, db.session))
+admin.add_view(ModelView(ChatroomMessages, db.session))
+# -------- ADMIN SETUP --------
 
 @app.route('/')
 def index():
