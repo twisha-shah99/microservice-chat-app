@@ -1,0 +1,15 @@
+.basic {
+    background-color: aqua;
+    color: red;
+
+    width: 40%;
+    height: 30%;
+    padding: 10px;
+    border: 1px black;
+    margin: 10px;
+    font-size: 30px;
+}
+
+.big-header {
+    font-size: larger;
+}
