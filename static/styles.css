@@ -103,4 +103,75 @@ body {
     color: #ff4c4c;
   }
 
+  .create-chatroom-button {
+    display: inline-block;
+    background-color: #333;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+    transition: background-color 0.3s ease;
+  }
+
+  .create-chatroom-button:hover {
+    background-color: #555;
+  }
+  
+  /* Chatroom List */
+  .chatroom-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .chatroom-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chatroom-info {
+    flex-grow: 1;
+  }
+
+.join-button,
+.leave-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.join-button {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.join-button:hover {
+  background-color: #218838;
+}
+
+.leave-button {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.leave-button:hover {
+  background-color: #c82333;
+}
+
+.chatroom-name {
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+
 
