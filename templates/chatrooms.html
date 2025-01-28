@@ -17,9 +17,10 @@
           </form>
       {% else %}
           <!-- User is not a member -->
-          <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}" method="post" style="display:inline;">
-              <button type="submit" class="join-button">Join</button>
-          </form>
+          
+        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}" method="post" style="display:inline;">
+            <button type="submit" class="join-button">Join</button>
+        </form>
       {% endif %}
   </li>
 {% endfor %}
