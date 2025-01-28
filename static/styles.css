@@ -214,6 +214,37 @@ body {
     margin-top: 0.25rem;
   }
   
+  .success-popup {
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #4caf50; /* Green background */
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Show the pop-up when it's targeted */
+  #success-message:target {
+    display: block;
+  }
 
+  /* Close button styling */
+.close-popup {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: white;
+  color: #4caf50;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.close-popup:hover {
+  background-color: #f1f1f1;
+}
 
 

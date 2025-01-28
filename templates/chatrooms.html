@@ -3,6 +3,13 @@
 {% block content %}
 <h1>Chatrooms</h1>
 <a href="{{ url_for('create_chatroom') }}" class="create-chatroom-button">+ Create New Chatroom</a>
+
+<!-- Success Message -->
+<div id="success-message" class="success-popup">
+  <p>You have successfully joined the chatroom!</p>
+  <a href="#" class="close-popup">Close</a>
+</div>
+
 <ul class="chatroom-list">
   {% for room in rooms %}
   <li class="chatroom-item">
@@ -18,7 +25,7 @@
       {% else %}
           <!-- User is not a member -->
           
-        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}" method="post" style="display:inline;">
+        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}#success-message" method="post" style="display:inline;">
             <button type="submit" class="join-button">Join</button>
         </form>
       {% endif %}
