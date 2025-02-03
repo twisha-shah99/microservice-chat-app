@@ -66,7 +66,8 @@ def chatrooms():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     rooms = Chatroom.query.all()
-    return render_template('chatrooms.html', rooms=rooms)
+    chatroomMembers = ChatroomMembers.query.all()
+    return render_template('chatrooms.html', rooms=rooms, chatroomMembers=chatroomMembers)
 
 # [TK] - deprecated
 # @app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
@@ -145,6 +146,7 @@ def leave_chatroom(room_id):
         return redirect(url_for('login'))
 
     # Remove the user from the ChatroomMembers table
+    print("In leave python function")
     member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=session['user_id']).first()
     if member:
         db.session.delete(member)
