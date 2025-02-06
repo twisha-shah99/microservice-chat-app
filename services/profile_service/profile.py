@@ -1,16 +1,15 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for, make_response
 from flask_sqlalchemy import SQLAlchemy
 from model import Profile
 from database import db
 import yaml
 from datetime import datetime, timedelta
-import jwt
-# from flask_socketio import SocketIO, emit
+from flask_jwt_extended import JWTManager, create_access_token
 
 with open("services/profile_service/config/profile_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-app = Flask(__name__, template_folder="../../templates")
+app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 app.config["SQLALCHEMY_DATABASE_URI"] = config["database"]["uri"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config["database"]["track_modifications"]
 
@@ -23,15 +22,13 @@ CHATROOM_SERVICE_URL = config['chatroom-service']['url']
 SECRET_KEY = config['flask']['secret_key']
 app.secret_key = SECRET_KEY
 
-# socketio = SocketIO(app)
+jwt = JWTManager(app)
 
 # Initialize the database
 db.init_app(app)
 
 @app.route('/')
 def index():
-    # if 'user_id' in session:
-    #     return redirect(url_for('chatrooms'))
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -49,22 +46,29 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        print(1)
         username = request.form['username']
         password = request.form['password']
+        print(2)
         user = Profile.query.filter_by(username=username, password=password).first()
+        print("User: ", user)
         if user:
-            session['user_id'] = user.profile_id
-            print("User logged in, session user_id:", session.get('user_id'))
-            # return redirect(url_for('chatrooms'))
-            # return redirect(f"{CHATROOM_SERVICE_URL}/chatrooms")
-            token = jwt.encode({
-                'user_id': user.profile_id,
-                'exp': datetime.utcnow() + timedelta(hours=1)  # Token expiration time
-            }, SECRET_KEY, algorithm='HS256')
+            access_token = create_access_token(identity=str(user.profile_id), expires_delta=timedelta(days=1), additional_claims={"username": user.username})
+            print("User logged in, session user_id:", user.profile_id)
+            response = make_response(redirect(f"http://{CHATROOM_SERVICE_URL}/chatrooms"))
+            response.set_cookie('access_token', access_token, httponly=True, secure=False)  # `secure=True` if HTTPS is enabled
             print("redirecting...")
-            # Return the token to the client (this can be passed via URL or set as a cookie)
-            return redirect(f"{CHATROOM_SERVICE_URL}/chatrooms?token={token}")
+            return response
     return render_template('login.html')
+
+@app.route('/get_username/<int:profile_id>', methods=['GET'])
+def get_username(profile_id):
+    user = Profile.query.get(profile_id)
+    if user:
+        return jsonify({'username': user.username}), 200
+    else:
+        return jsonify({'message': 'User not found'}), 404
+
 
 @app.route('/logout')
 def logout():
@@ -74,8 +78,6 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
         db.create_all() 
         print("Database Tables created for Profile Service!")
     app.run(port=5001,debug=True)
-    # socketio.run(app, host='0.0.0.0', port=5001)

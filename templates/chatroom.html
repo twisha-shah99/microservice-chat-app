@@ -5,13 +5,13 @@
 <p class="chatroom-description"> {{ room.description }}</p>
 
 <ul id="messages" class="messages-list">
-  {% for message, timestamp, username, profile_id in messages %}
+  {% for msg in messages %}
       <li class="message-item">
-          <strong class="message-username">{{ username }} (ID: {{ profile_id }}):</strong> 
-          <span class="message-text">{{ message }}</span>
-          <small class="message-timestamp">({{ timestamp.strftime('%Y-%m-%d %H:%M:%S') }})</small>
+          <strong class="message-username">{{ msg.username }} (ID: {{ msg.user }}):</strong> 
+          <span class="message-text">{{ msg.message }}</span>
+          <small class="message-timestamp">({{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') }})</small>
       </li>
-  {% endfor %}
+  {% endfor %} <!-- Close the for loop -->
 </ul>
 
 <form method="post" class="message-form">
