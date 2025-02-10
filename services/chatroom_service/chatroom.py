@@ -127,22 +127,37 @@ def chatrooms():
         )
 
 @app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
-@jwt_required(locations=["cookies"])
 def chatroom(room_id):
+    # PREFORM TOKEN AUTHENTICATION
+    print("I AM IN A CHATROOM")
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+
+    print("profile: ", profile_id, " | accessToken: " + access_token)
+
+    if not profile_id or not access_token:
+        print("Profile ID or Access Token missing.")
+        abort(400, description="Both profile_id and access_token are required.")
+
+    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+        "access_token": access_token,
+        "profile_id": profile_id
+    })
+    print(auth_response)
+
+    # TODO redirect to login? when to redirect to login?
+    if auth_response.status_code != 200:
+        return make_response(jsonify({"error": "Token authentication failed"}), 400)
+    
+    print("Token authentication success!")
+
     print("Going inside chatroom...")
-    current_user = get_jwt_identity() 
-    current_username = get_jwt()["username"]
-    if not current_user:
-        return redirect(f"http://{PROFILE_SERVICE_URL}/login")
     
     room = Chatroom.query.get(room_id)
 
     # Fetch the chatroom members and check if the user is a member
     member_ids = ChatroomMembers.query.filter_by(chatroom_id=room_id).all()
     member_ids = [member.profile_id for member in member_ids]
-
-    if int(current_user) not in [int(member) for member in member_ids]:
-        return redirect(url_for('chatrooms'))
     
     # Query to fetch messages with sender's username and profile ID
     messages = db.session.query(
@@ -153,11 +168,11 @@ def chatroom(room_id):
     
     message_data = []
     for message, timestamp, sent_by in messages:
-        response = requests.get(f'http://{PROFILE_SERVICE_URL}/get_username/{sent_by}')
-        if response.status_code == 200:
-            username = response.json().get('username')
-        else:
-            username = 'Unknown'
+        # response = requests.get(f'http://{PROFILE_SERVICE_URL}/get_username/{sent_by}')
+        # if response.status_code == 200:
+        #     username = response.json().get('username')
+        # else:
+        #     username = 'Unknown'
         message_data.append({'message': message, 'timestamp': timestamp, 'username': username, 'user': sent_by})
 
 
@@ -165,14 +180,14 @@ def chatroom(room_id):
         message_text = request.form['message']
         new_message = ChatroomMessages(
             chatroom_id=room_id,
-            sent_by=current_user,
+            sent_by=profile_id,
             message=message_text,
             timestamp=datetime.datetime.now()
         )
         db.session.add(new_message)
         db.session.commit()
-        return redirect(url_for('chatroom', room_id=room_id))
-
+        return redirect(url_for('chatroom', room_id=room_id, profile_id=profile_id, access_token=access_token))
+    
     return render_template('chatroom.html', room=room, messages=message_data)
 
 # Join a chatroom

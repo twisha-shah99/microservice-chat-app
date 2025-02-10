@@ -23,7 +23,7 @@
   {% for room in rooms %}
   <li class="chatroom-item">
     <div class="chatroom-info">
-        <a href="/chatroom/{{ room.chatroom_id }}" class="chatroom-name">{{ room.chatroom_name }}</a>
+      <a href="{{ url_for('chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="chatroom-name">{{ room.chatroom_name }}</a>
     </div>
     {% set member_ids = chatroomMembers | selectattr('chatroom_id', 'equalto', room.chatroom_id) | map(attribute='profile_id') | list %}
     <!-- <p>Member IDs for this chatroom: {{ member_ids }}</p> -->
