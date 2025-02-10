@@ -1,7 +1,3 @@
-Flask
-Flask-SQLAlchemy
-PyYAML
-Flask-JWT-Extended
-datetime
-requests
-Flask-WTF
+flask
+flask-sqlalchemy
+flask-admin
