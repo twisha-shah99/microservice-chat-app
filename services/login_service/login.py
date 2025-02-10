@@ -53,6 +53,7 @@ def register():
 
 @app.route("/login", methods=["GET"])
 def get_login():
+    print('IN GET LOGIN')
     return render_template("login.html")
 
 @app.route("/login", methods=["POST"])

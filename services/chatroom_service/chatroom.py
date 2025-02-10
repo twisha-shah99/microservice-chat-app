@@ -93,7 +93,6 @@ def create_chatroom():
     return render_template('create_chatroom.html')  # Render the form for GET requests
    
 @app.route('/chatrooms', methods=["GET", "POST"])
-#@jwt_required(locations=["cookies"])
 def chatrooms():
     print("inside /chatrooms")
    # Get the profile_id and access_token from the request body
@@ -173,8 +172,10 @@ def chatroom(room_id):
         #     username = response.json().get('username')
         # else:
         #     username = 'Unknown'
-        message_data.append({'message': message, 'timestamp': timestamp, 'username': username, 'user': sent_by})
+        
+        message_data.append({'message': message, 'timestamp': timestamp, 'user': sent_by})
 
+    # TODO add username to message instead of id
 
     if request.method == 'POST':
         message_text = request.form['message']
