@@ -51,19 +51,16 @@ def register():
         return make_response(jsonify({"error": "Token creation failed"}), 400)
 
     access_token = token_response.json().get("access_token")
-    # TODO: redirect to login page after registered
+    # Redirect to login page after registered
     return redirect(url_for('get_login'))
-    # return jsonify({"access_token": access_token, "profile_id": profile_id})
-
-
+    
 @app.route("/login", methods=["GET"])
 def get_login():
-    print('IN GET LOGIN')
     return render_template("login.html")
 
 @app.route("/login", methods=["POST"])
 def login():
-    print("login...")
+    # Get form data
     form_data = request.form
     username = form_data.get("username")
     password = form_data.get("password")
@@ -86,7 +83,6 @@ def login():
                 print("Redirecting to chatrooms...")
                 # Redirect directly with the profile_id and access_token as query parameters
                 return redirect(f"http://localhost:5002/chatrooms?profile_id={profile_id}&access_token={access_token}")
-
 
     # If profile ID or access token is not found, redirect back to login page
     return render_template('login.html')

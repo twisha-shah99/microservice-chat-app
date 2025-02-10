@@ -46,46 +46,31 @@ def home():
     # Get profile id and access token
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    # redirect to chatrooms when home is pushed
+    # redirect to chatrooms page when home is pushed
     return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
 
 @app.route('/create_chatroom', methods=['GET', 'POST'])
-#@jwt_required(locations=["cookies"]) 
 def create_chatroom():
-    print("Cretaing chatroom....")
-    
-
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-
-    print("profile: ", profile_id, " | accessToken: " + access_token)
-
+    # check for profile id and access token
     if not profile_id or not access_token:
         print("Profile ID or Access Token missing.")
         abort(400, description="Both profile_id and access_token are required.")
 
-    # TODO check for valid access token /authenticate token
+    # Check for valid access token
     auth_response = requests.post("http://localhost:8000/authenticate_token", json={
         "access_token": access_token,
         "profile_id": profile_id
     })
-    print(auth_response)
 
-    # TODO redirect to login? when to redirect to login?
     if auth_response.status_code != 200:
         return make_response(jsonify({"error": "Token authentication failed"}), 400)
     
-    print("Token authentication success!")
-
-  
-    print(request)
-    print("Request method:", request.method)
     if request.method == 'POST':
-        print("POST")
+        # when submission to cerate chatroom
         chatroom_name = request.form['chatroom_name']
         description = request.form['description']
-
-        print(f"Chatroom Name: {chatroom_name}, Description: {description}")
 
         # Create a new Chatroom instance
         new_chatroom = Chatroom(chatroom_name=chatroom_name, description=description)
@@ -96,26 +81,21 @@ def create_chatroom():
         new_member = ChatroomMembers(chatroom_id=new_chatroom.chatroom_id, profile_id=profile_id)
         db.session.add(new_member)
         db.session.commit()
-
+        # redirect user back to chatrooms page
         return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
 
     return render_template('create_chatroom.html')  # Render the form for GET requests
    
 @app.route('/chatrooms', methods=["GET", "POST"])
 def chatrooms():
-    print("inside /chatrooms")
-   # Get the profile_id and access_token from the request body
-    # Get the profile_id and access_token from the URL query parameters
+
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     if not profile_id or not access_token:
-        print("Profile ID or Access Token missing.")
         abort(400, description="Both profile_id and access_token are required.")
 
-    # TODO: call get_user_details -in profile to get username based on profile_id
-    # then query the table and render!
+    # TODO: VERIFY TOKEN
 
     username = ""
     response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
@@ -136,12 +116,10 @@ def chatrooms():
 
 @app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
 def chatroom(room_id):
-    # PREFORM TOKEN AUTHENTICATION
-    print("I AM IN A CHATROOM")
+    # Get profile id and access_token
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
 
-    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     if not profile_id or not access_token:
         print("Profile ID or Access Token missing.")
@@ -151,15 +129,9 @@ def chatroom(room_id):
         "access_token": access_token,
         "profile_id": profile_id
     })
-    print(auth_response)
 
-    # TODO redirect to login? when to redirect to login?
     if auth_response.status_code != 200:
         return make_response(jsonify({"error": "Token authentication failed"}), 400)
-    
-    print("Token authentication success!")
-
-    print("Going inside chatroom...")
     
     room = Chatroom.query.get(room_id)
 
@@ -175,23 +147,17 @@ def chatroom(room_id):
     ).filter(ChatroomMessages.chatroom_id == room_id).all()
     
     message_data = []
-    for message, timestamp, sent_by in messages:
-        # response = requests.get(f'http://{PROFILE_SERVICE_URL}/get_username/{sent_by}')
-        # if response.status_code == 200:
-        #     username = response.json().get('username')
-        # else:
-        #     username = 'Unknown'
-        
+    for message, timestamp, sent_by in messages:        
         message_data.append({'message': message, 'timestamp': timestamp, 'user': sent_by})
 
-    # get username to have as sent by
+    # get username
     response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
     if response.status_code == 200:
         username = response.json().get('username')
-    # what if username not present
     else:
         return make_response(jsonify({"error": "Username not found"}), 402)
 
+    # Add message to db
     if request.method == 'POST':
         message_text = request.form['message']
         new_message = ChatroomMessages(
@@ -202,22 +168,17 @@ def chatroom(room_id):
         )
         db.session.add(new_message)
         db.session.commit()
+        # Redirect to chatroom page
         return redirect(url_for('chatroom', room_id=room_id, profile_id=profile_id, access_token=access_token))
     
-    return render_template('chatroom.html', room=room, messages=message_data)
+    return render_template('chatroom.html', room=room, messages=message_data) # Render the form for GET requests
 
-# Join a chatroom
+
 @app.route('/join_chatroom/<int:room_id>', methods=['POST'])
 def join_chatroom(room_id):
-    # current_user = get_jwt_identity() 
-    # if not current_user:
-    #     return redirect(f"http://{PROFILE_SERVICE_URL}/login")
-
-    # TODO pass in user_id and auth_token to method
+    # Get args
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    print('IN JOIN')
-    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     # Check if the user is already a member
     existing_member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=profile_id).first()
@@ -226,21 +187,14 @@ def join_chatroom(room_id):
         new_member = ChatroomMembers(chatroom_id=room_id, profile_id=profile_id)
         db.session.add(new_member)
         db.session.commit()
-
     return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))  # Redirect to the list of chatrooms
 
 
 # Leave a chatroom
 @app.route('/leave_chatroom/<int:room_id>', methods=['POST'])
 def leave_chatroom(room_id):
-    #current_user = get_jwt_identity() 
-    # if not current_user:
-    #     return redirect(f"http://{PROFILE_SERVICE_URL}/login")
-
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    print('IN LEAVE')
-    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     # Remove the user from the ChatroomMembers table
     member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=profile_id).first()
