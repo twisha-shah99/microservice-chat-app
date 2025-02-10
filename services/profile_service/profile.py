@@ -62,6 +62,15 @@ def validate_user():
     return jsonify({"profile_id": None})
     
 
+@app.route('/get_username/<int:profile_id>', methods=['GET'])
+def get_username(profile_id):
+    user = Profile.query.get(profile_id)
+    if user:
+        return jsonify({'username': user.username}), 200
+    else:
+        return jsonify({'message': 'User not found'}), 404
+
+
 # @app.route('/')
 # def index():
 #     return redirect(url_for('login'))

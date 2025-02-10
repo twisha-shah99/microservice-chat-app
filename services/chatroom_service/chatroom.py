@@ -102,14 +102,15 @@ def create_chatroom():
     
     return render_template('create_chatroom.html')  # Render the form for GET requests
    
-@app.route('/chatrooms')
+@app.route('/chatrooms', methods=["GET", "POST"])
 # @jwt_required(locations=["cookies"])
 def chatrooms():
     print("inside /chatrooms")
    # Get the profile_id and access_token from the request body
-    auth_data = request.json
-    profile_id = auth_data.get("profile_id")
-    access_token = auth_data.get("access_token")
+    # Get the profile_id and access_token from the URL query parameters
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     if not profile_id or not access_token:
         print("Profile ID or Access Token missing.")
@@ -117,18 +118,23 @@ def chatrooms():
 
     # TODO: call get_user_details -in profile to get username based on profile_id
     # then query the table and render!
-        
-    # rooms = Chatroom.query.all()
-    # chatroomMembers = ChatroomMembers.query.all()
-    # return render_template(
-    #         'chatrooms.html', 
-    #         rooms=rooms, 
-    #         chatroomMembers=chatroomMembers, 
-    #         current_user=current_user,
-    #         current_username=current_username,
-    #         profile_service_url=f"http://{PROFILE_SERVICE_URL}", 
-    #         chatroom_service_url=f"http://{CHATROOM_SERVICE_URL}"
-    #     )
+
+    username = ""
+    response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
+    if response.status_code == 200:
+        username = response.json().get('username')
+
+    rooms = Chatroom.query.all()
+    chatroomMembers = ChatroomMembers.query.all()
+    return render_template(
+            'chatrooms.html', 
+            rooms=rooms, 
+            chatroomMembers=chatroomMembers, 
+            current_user=profile_id,
+            current_username=username,
+            profile_service_url=f"http://{PROFILE_SERVICE_URL}", 
+            chatroom_service_url=f"http://{CHATROOM_SERVICE_URL}"
+        )
 
 @app.route('/chatroom/<int:room_id>', methods=['GET', 'POST'])
 @jwt_required(locations=["cookies"])

@@ -78,13 +78,9 @@ def login():
             
             if access_token:
                 print("Redirecting to chatrooms...")
-                response = requests.post(
-                    "http://localhost:5002/chatrooms", 
-                    json={"profile_id": profile_id, "access_token": access_token}
-                )
-                if response.status_code == 200:
-                    # Handle successful chatroom access
-                    return response.json()  # Or whatever you want to return in the case of success
+                # Redirect directly with the profile_id and access_token as query parameters
+                return redirect(f"http://localhost:5002/chatrooms?profile_id={profile_id}&access_token={access_token}")
+
 
     # If profile ID or access token is not found, redirect back to login page
     return render_template('login.html')
