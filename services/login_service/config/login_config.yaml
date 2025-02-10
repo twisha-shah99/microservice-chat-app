@@ -1,0 +1,10 @@
+database:
+  uri: ""
+  track_modifications: false
+
+profile-service:
+  url: "localhost:5001"
+
+flask:
+  secret_key: 'ECE4150-Lab4'
+

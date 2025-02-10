@@ -27,53 +27,78 @@ jwt = JWTManager(app)
 # Initialize the database
 db.init_app(app)
 
-@app.route('/')
-def index():
-    return redirect(url_for('login'))
+@app.route("/new_profile", methods=["POST"])
+def new_profile():
+    profile_data = request.json
+    print("Creating new profile..")
+    print(profile_data)
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        bio = request.form['bio']
-        new_user = Profile(username=username, password=password, bio=bio, date_created=datetime.now())
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-    return render_template('register.html')
+    # Ensure you have all the required fields
+    if not all(k in profile_data for k in ("user_name", "password", "bio")):
+       print("Missing fields...")
+       return make_response(jsonify({"error": "Missing  fields in requested data"}), 400)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        print(1)
-        username = request.form['username']
-        password = request.form['password']
-        print(2)
-        user = Profile.query.filter_by(username=username, password=password).first()
-        print("User: ", user)
-        if user:
-            access_token = create_access_token(identity=str(user.profile_id), expires_delta=timedelta(days=1), additional_claims={"username": user.username})
-            print("User logged in, session user_id:", user.profile_id)
-            response = make_response(redirect(f"http://{CHATROOM_SERVICE_URL}/chatrooms"))
-            response.set_cookie('access_token', access_token, httponly=True, secure=False)  # `secure=True` if HTTPS is enabled
-            print("redirecting...")
-            return response
-    return render_template('login.html')
+    # Create a new profile object and add to database
+    new_profile = Profile(
+        username=profile_data["user_name"],
+        # email=profile_data["email"],
+        password=profile_data["password"],
+        date_created=datetime.now(),  # Set the current date and time
+        bio=profile_data.get("bio", "")  # Default to empty string if not provided
+    )
 
-@app.route('/get_username/<int:profile_id>', methods=['GET'])
-def get_username(profile_id):
-    user = Profile.query.get(profile_id)
-    if user:
-        return jsonify({'username': user.username}), 200
-    else:
-        return jsonify({'message': 'User not found'}), 404
+    db.session.add(new_profile)
+    db.session.commit()
+
+    # Return the profile ID
+    return jsonify({"profile_id": new_profile.profile_id})
+
+# @app.route('/')
+# def index():
+#     return redirect(url_for('login'))
+
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if request.method == 'POST':
+#         username = request.form['username']
+#         password = request.form['password']
+#         bio = request.form['bio']
+#         new_user = Profile(username=username, password=password, bio=bio, date_created=datetime.now())
+#         db.session.add(new_user)
+#         db.session.commit()
+#         return redirect(url_for('login'))
+#     return render_template('register.html')
+
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         print(1)
+#         username = request.form['username']
+#         password = request.form['password']
+#         user = Profile.query.filter_by(username=username, password=password).first()
+#         print("User: ", user)
+#         if user:
+#             access_token = create_access_token(identity=str(user.profile_id), expires_delta=timedelta(days=1), additional_claims={"username": user.username})
+#             print("User logged in, session user_id:", user.profile_id)
+#             response = make_response(redirect(f"http://{CHATROOM_SERVICE_URL}/chatrooms"))
+#             response.set_cookie('access_token', access_token, httponly=True, secure=False)  # `secure=True` if HTTPS is enabled
+#             print("redirecting...")
+#             return response
+#     return render_template('login.html')
+
+# @app.route('/get_username/<int:profile_id>', methods=['GET'])
+# def get_username(profile_id):
+#     user = Profile.query.get(profile_id)
+#     if user:
+#         return jsonify({'username': user.username}), 200
+#     else:
+#         return jsonify({'message': 'User not found'}), 404
 
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('login'))
+# @app.route('/logout')
+# def logout():
+#     session.pop('user_id', None)
+#     return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
