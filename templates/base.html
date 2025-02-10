@@ -5,12 +5,14 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <nav>
-      <a href="/">Home</a>
+  <nav class="nav-bar">
+      <a href="{{ url_for('home', profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="nav-bar-item">Home</a>
       {% if session.get('user_id') %}
-          <a href="/logout">Logout</a>
+          <a href="{{ profile_service_url }}/logout" class="nav-bar-item">Logout</a>
       {% else %}
-          <a href="/login">Login</a>
+          <!-- <a href="/login" class="nav-bar-item">Login</a> -->
+           <!-- TODO ALTER? -->
+          <a href="http://127.0.0.1:8002/login" class="nav-bar-item">Login</a>
       {% endif %}
   </nav>
   <div class="content">
