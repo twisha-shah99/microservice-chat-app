@@ -6,7 +6,7 @@
 </head>
 <body>
   <nav class="nav-bar">
-      <a href="/" class="nav-bar-item">Home</a>
+      <a href="{{ url_for('home', profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="nav-bar-item">Home</a>
       {% if session.get('user_id') %}
           <a href="{{ profile_service_url }}/logout" class="nav-bar-item">Logout</a>
       {% else %}

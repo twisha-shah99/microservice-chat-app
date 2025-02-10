@@ -9,6 +9,11 @@ class RegisterForm:
         self.password = password
         self.bio = bio
 
+@app.route("/", methods=['GET'])
+def home():
+    # redirect to login
+    return redirect(url_for('get_login'))
+
 @app.route("/register", methods=["GET"])
 def get_register():
     return render_template("register.html")

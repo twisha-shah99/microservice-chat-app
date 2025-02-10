@@ -40,6 +40,15 @@ csrf = CSRFProtect(app)
 # Initialize the database
 db.init_app(app)
 
+
+@app.route("/", methods=['GET'])
+def home():
+    # Get profile id and access token
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+    # redirect to chatrooms when home is pushed
+    return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
+
 @app.route('/create_chatroom', methods=['GET', 'POST'])
 #@jwt_required(locations=["cookies"]) 
 def create_chatroom():
