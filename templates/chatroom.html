@@ -2,25 +2,23 @@
 
 {% block content %}
 <h1>{{ room.chatroom_name }}</h1>
-<p class="chatroom-description"> {{ room.description }}</p>
+<p>{{ room.description }}</p>
 
-<ul id="messages" class="messages-list">
-  {% for msg in messages %}
-      <li class="message-item">
-          <strong class="message-username">{{ msg.username }} (ID: {{ msg.user }}):</strong> 
-          <span class="message-text">{{ msg.message }}</span>
-          <small class="message-timestamp">({{ msg.timestamp.strftime('%Y-%m-%d %H:%M:%S') }})</small>
+<ul id="messages">
+  {% for message, timestamp, username, profile_id in messages %}
+      <li>
+          <strong>{{ username }} (ID: {{ profile_id }}):</strong> 
+          {{ message }} 
+          <small>({{ timestamp.strftime('%Y-%m-%d %H:%M:%S') }})</small>
       </li>
-  {% endfor %} <!-- Close the for loop -->
+  {% endfor %}
 </ul>
 
-<form method="post" class="message-form">
-  <div class="form-group">
-    <label for="message">Message:</label>
-    <input type="text" id="message" name="message" required class="form-input"><br><br>
-    <button type="submit" class="button">Send</button>
-  </div>
+<form method="post">
+  <label for="message">Message:</label><br>
+  <input type="text" id="message" name="message" required><br>
+  <button type="submit">Send</button>
 </form>
 
-<a href="{{ url_for('chatrooms', profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="button">Back to Chatrooms</a>
+<a href="/chatrooms">Back to Chatrooms</a>
 {% endblock %}

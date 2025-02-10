@@ -2,19 +2,14 @@
 
 {% block content %}
 <h1>Create a New Chatroom</h1>
-<form method="post" class="basic-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-group">
-        <label for="chatroom_name">Chatroom Name:</label>
-        <input type="text" id="chatroom_name" class="form-input" name="chatroom_name" required><br><br>
-    </div>  
-    <div class="form-group">
-        <label for="description">Description:</label>
-        <textarea id="description" name="description" rows="4" cols="50" class="form-input"></textarea><br><br>
+<form method="post">
+    <label for="chatroom_name">Chatroom Name:</label><br>
+    <input type="text" id="chatroom_name" name="chatroom_name" required><br><br>
 
-    </div>
-    
-    <button type="submit" class="button">Create Chatroom</button>
+    <label for="description">Description:</label><br>
+    <textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
+
+    <button type="submit">Create Chatroom</button>
 </form>
-<a href="{{ url_for('chatrooms') }}" class="button">Back to Chatrooms</a>
+<a href="{{ url_for('chatrooms') }}">Back to Chatrooms</a>
 {% endblock %}
