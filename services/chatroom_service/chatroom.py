@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for, abort
+from flask import Flask, request, jsonify, session, render_template, redirect, url_for, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from database import db
 from model import Chatroom, ChatroomMembers, ChatroomMessages
@@ -9,7 +9,7 @@ import datetime
 from flask_wtf.csrf import CSRFProtect
 import requests
 
-with open("services/chatroom_service/config/chatroom_config.yaml", "r") as file:
+with open("config/chatroom_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
@@ -41,44 +41,34 @@ csrf = CSRFProtect(app)
 db.init_app(app)
 
 @app.route('/create_chatroom', methods=['GET', 'POST'])
-@jwt_required(locations=["cookies"]) 
+#@jwt_required(locations=["cookies"]) 
 def create_chatroom():
     print("Cretaing chatroom....")
-    token = request.cookies.get('access_token')
-    print("Token in cookies:", token)  
-
-    try:
-        decoded_token = jtt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        print("Decoded token:", decoded_token)
-    except jtt.ExpiredSignatureError:
-        print("Token has expired.")
-        return jsonify(message="Token expired"), 401
-    except jtt.InvalidTokenError:
-        print("Invalid token.")
-        return jsonify(message="Invalid token"), 401
     
-    current_user = get_jwt_identity()
-    print("Current user:", current_user)
+
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+
+    print("profile: ", profile_id, " | accessToken: " + access_token)
+
+    if not profile_id or not access_token:
+        print("Profile ID or Access Token missing.")
+        abort(400, description="Both profile_id and access_token are required.")
+
+    # TODO check for valid access token /authenticate token
+    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+        "access_token": access_token,
+        "profile_id": profile_id
+    })
+    print(auth_response)
+
+    # TODO redirect to login? when to redirect to login?
+    if auth_response.status_code != 200:
+        return make_response(jsonify({"error": "Token authentication failed"}), 400)
     
-    decoded_token = jtt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    print("DECODED!!!:", decoded_token)
+    print("Token authentication success!")
 
-    # Get the expiration time (exp) from the token and convert it to a datetime object
-    exp_timestamp = decoded_token.get('exp')
-    expiration_time = datetime.datetime.utcfromtimestamp(exp_timestamp)
-
-    # Check if the token has expired
-    current_time = datetime.datetime.utcnow()
-
-    if expiration_time < current_time:
-        print("Token has expired")
-    else:
-        print(f"Token is valid until {expiration_time}")
-    print(1)
-    if not current_user:  # Ensure the user is authenticated
-        print(2)
-        return redirect(f"http://{PROFILE_SERVICE_URL}/login")
-    print(3)
+  
     print(request)
     print("Request method:", request.method)
     if request.method == 'POST':
@@ -94,16 +84,16 @@ def create_chatroom():
         db.session.commit()
 
         # Add the creator as a member of the new chatroom
-        new_member = ChatroomMembers(chatroom_id=new_chatroom.chatroom_id, profile_id=current_user)
+        new_member = ChatroomMembers(chatroom_id=new_chatroom.chatroom_id, profile_id=profile_id)
         db.session.add(new_member)
         db.session.commit()
 
-        return redirect(url_for('chatrooms'))  # Redirect to chatrooms list after creation
-    
+        return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
+
     return render_template('create_chatroom.html')  # Render the form for GET requests
    
 @app.route('/chatrooms', methods=["GET", "POST"])
-# @jwt_required(locations=["cookies"])
+#@jwt_required(locations=["cookies"])
 def chatrooms():
     print("inside /chatrooms")
    # Get the profile_id and access_token from the request body

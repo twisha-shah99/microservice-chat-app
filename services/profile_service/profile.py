@@ -6,7 +6,7 @@ import yaml
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager, create_access_token
 
-with open("services/profile_service/config/profile_config.yaml", "r") as file:
+with open("config/profile_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
