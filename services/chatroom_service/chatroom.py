@@ -184,13 +184,19 @@ def chatroom(room_id):
         
         message_data.append({'message': message, 'timestamp': timestamp, 'user': sent_by})
 
-    # TODO add username to message instead of id
+    # get username to have as sent by
+    response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
+    if response.status_code == 200:
+        username = response.json().get('username')
+    # what if username not present
+    else:
+        return make_response(jsonify({"error": "Username not found"}), 402)
 
     if request.method == 'POST':
         message_text = request.form['message']
         new_message = ChatroomMessages(
             chatroom_id=room_id,
-            sent_by=profile_id,
+            sent_by=username,
             message=message_text,
             timestamp=datetime.datetime.now()
         )
