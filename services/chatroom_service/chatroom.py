@@ -95,7 +95,14 @@ def chatrooms():
     if not profile_id or not access_token:
         abort(400, description="Both profile_id and access_token are required.")
 
-    # TODO: VERIFY TOKEN
+    # verify token
+    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+        "access_token": access_token,
+        "profile_id": profile_id
+    })
+
+    if auth_response.status_code != 200:
+        return make_response(jsonify({"error": "Token authentication failed"}), 400)
 
     username = ""
     response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
