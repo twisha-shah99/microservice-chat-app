@@ -29,12 +29,12 @@
     <!-- <p>Member IDs for this chatroom: {{ member_ids }}</p> -->
     {% if current_user | int in member_ids %}
           <!-- User is already a member -->
-          <form action="{{ url_for('leave_chatroom', room_id=room.chatroom_id) }}#left-message" method="post" style="display:inline;">
+          <form action="{{ url_for('leave_chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'),access_token=request.args.get('access_token')) }}#left-message" method="post" style="display:inline;">
               <button type="submit" class="leave-button">Leave</button>
           </form>
       {% else %}
           <!-- User is not a member -->
-        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}#success-message" method="post" style="display:inline;">
+        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'),access_token=request.args.get('access_token')) }}#success-message" method="post" style="display:inline;">
             <button type="submit" class="join-button">Join</button>
         </form>
       {% endif %}

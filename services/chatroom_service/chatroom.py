@@ -208,37 +208,47 @@ def chatroom(room_id):
 
 # Join a chatroom
 @app.route('/join_chatroom/<int:room_id>', methods=['POST'])
-@jwt_required(locations=["cookies"])
 def join_chatroom(room_id):
-    current_user = get_jwt_identity() 
-    if not current_user:
-        return redirect(f"http://{PROFILE_SERVICE_URL}/login")
+    # current_user = get_jwt_identity() 
+    # if not current_user:
+    #     return redirect(f"http://{PROFILE_SERVICE_URL}/login")
+
+    # TODO pass in user_id and auth_token to method
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+    print('IN JOIN')
+    print("profile: ", profile_id, " | accessToken: " + access_token)
 
     # Check if the user is already a member
-    existing_member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=current_user).first()
+    existing_member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=profile_id).first()
     if not existing_member:
         # Add the user to the ChatroomMembers table
-        new_member = ChatroomMembers(chatroom_id=room_id, profile_id=current_user)
+        new_member = ChatroomMembers(chatroom_id=room_id, profile_id=profile_id)
         db.session.add(new_member)
         db.session.commit()
 
-    return redirect(url_for('chatrooms'))  # Redirect to the list of chatrooms
+    return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))  # Redirect to the list of chatrooms
 
 
 # Leave a chatroom
 @app.route('/leave_chatroom/<int:room_id>', methods=['POST'])
-@jwt_required(locations=["cookies"])
 def leave_chatroom(room_id):
-    current_user = get_jwt_identity() 
-    if not current_user:
-        return redirect(f"http://{PROFILE_SERVICE_URL}/login")
+    #current_user = get_jwt_identity() 
+    # if not current_user:
+    #     return redirect(f"http://{PROFILE_SERVICE_URL}/login")
+
+    profile_id = request.args.get("profile_id")
+    access_token = request.args.get("access_token")
+    print('IN LEAVE')
+    print("profile: ", profile_id, " | accessToken: " + access_token)
+
     # Remove the user from the ChatroomMembers table
-    member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=current_user).first()
+    member = ChatroomMembers.query.filter_by(chatroom_id=room_id, profile_id=profile_id).first()
     if member:
         db.session.delete(member)
         db.session.commit()
 
-    return redirect(url_for('chatrooms'))  # Redirect to the list of chatrooms
+    return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))  # Redirect to the list of chatrooms
 
 
 if __name__ == '__main__':
