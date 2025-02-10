@@ -46,8 +46,8 @@ def register():
         return make_response(jsonify({"error": "Token creation failed"}), 400)
 
     access_token = token_response.json().get("access_token")
-    # TODO: redirect to login page.
-    return render_template('login.html')
+    # TODO: redirect to login page after registered
+    return redirect(url_for('get_login'))
     # return jsonify({"access_token": access_token, "profile_id": profile_id})
 
 
