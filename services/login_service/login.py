@@ -4,7 +4,7 @@ import requests  # Use requests instead of httpx
 app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
 
 class RegisterForm:
-    def __init__(self, user_name, password, bio):
+    def __init__(self, user_name, password, bio=None):
         self.user_name = user_name
         self.password = password
         self.bio = bio
@@ -21,7 +21,7 @@ def register():
     register_form = RegisterForm(
         form_data["username"], 
         form_data["password"], 
-        form_data["bio"]
+        form_data.get("bio", None)
     )
 
     profile_response = requests.post("http://localhost:5001/new_profile", json={
@@ -59,21 +59,35 @@ def get_login():
 def login():
     print("login...")
     form_data = request.form
-    access_token = form_data.get("access_token")
-    profile_id = form_data.get("profile_id")
-
-    if not access_token or not profile_id:
-        abort(400, description="Both access_token and profile_id are required")
-
-    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
-        "access_token": access_token,
-        "profile_id": profile_id
+    username = form_data.get("username")
+    password = form_data.get("password")
+    # make this endpoint return profile id
+    profile_response = requests.post("http://localhost:5001/validate_user", json={
+        "user_name": username,
+        "password": password
     })
+    profile_response = profile_response.json()
+    profile_id = profile_response["profile_id"]
+    if profile_id:
+        access_token_response = requests.post("http://localhost:8000/retrieve_token", json={
+            "profile_id": profile_id
+        })
 
-    if auth_response.status_code != 200:
-        abort(400, description="Authentication failed")
-    
-    return redirect("http://localhost:8003/chatrooms")
+        if access_token_response.status_code == 200:
+            access_token = access_token_response.json().get("access_token")
+            
+            if access_token:
+                print("Redirecting to chatrooms...")
+                response = requests.post(
+                    "http://localhost:5002/chatrooms", 
+                    json={"profile_id": profile_id, "access_token": access_token}
+                )
+                if response.status_code == 200:
+                    # Handle successful chatroom access
+                    return response.json()  # Or whatever you want to return in the case of success
+
+    # If profile ID or access token is not found, redirect back to login page
+    return render_template('login.html')
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8002)

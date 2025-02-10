@@ -49,6 +49,19 @@ def new_profile():
     # Return the profile ID
     return jsonify({"profile_id": new_profile.profile_id})
 
+@app.route("/validate_user", methods = ["GET", "POST"])
+def validate_user():
+    print("Validating user..")
+    user_data = request.get_json()
+    print(user_data)
+    user = Profile.query.filter_by(username=user_data["user_name"], password=user_data["password"]).first()
+    if user:
+        print ("Found user")
+        return jsonify({"profile_id": user.profile_id})
+    print("Not found user")
+    return jsonify({"profile_id": None})
+    
+
 # @app.route('/')
 # def index():
 #     return redirect(url_for('login'))

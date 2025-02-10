@@ -54,6 +54,25 @@ def authenticate_token():
         abort(401, description="Invalid token or profile_id")
     return jsonify({"message": "Authentication successful"})
 
+@app.route("/retrieve_token", methods=["GET", "POST"])
+def retrieve_token():
+    print("retrieving...")
+    auth_data = request.json
+    profile_id = auth_data.get("profile_id")
+    # Ensure profile_id is provided
+    if not profile_id:
+        abort(400, description="profile_id is required")
+
+    print(profile_id)
+    # Retrieve the token associated with the profile_id
+    auth_record = db.session.query(Auth).filter(Auth.profile_id == profile_id).first()
+    print(auth_record.access_token)
+    if not auth_record:
+        abort(404, description="No token found for the given profile_id")
+
+    # Return the found access_token
+    return jsonify({"access_token": auth_record.access_token})
+
 @app.route("/login")
 def login():
     # Placeholder for login page logic
