@@ -24,7 +24,6 @@ app.secret_key = SECRET_KEY
 
 jwt = JWTManager(app)
 
-# Initialize the database
 db.init_app(app)
 
 @app.route("/new_profile", methods=["POST"])
@@ -33,15 +32,12 @@ def new_profile():
     print("Creating new profile..")
     print(profile_data)
 
-    # Ensure you have all the required fields
     if not all(k in profile_data for k in ("user_name", "password", "bio")):
        print("Missing fields...")
        return make_response(jsonify({"error": "Missing  fields in requested data"}), 400)
 
-    # Create a new profile object and add to database
     new_profile = Profile(
         username=profile_data["user_name"],
-        # email=profile_data["email"],
         password=profile_data["password"],
         date_created=datetime.now(),  # Set the current date and time
         bio=profile_data.get("bio", "")  # Default to empty string if not provided

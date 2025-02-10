@@ -10,8 +10,6 @@ app = Flask(__name__)
 with open("services/auth_service/config/auth_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-
-
 app.config["SQLALCHEMY_DATABASE_URI"] = config["database"]["uri"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config["database"]["track_modifications"]
 # Initialize the database
@@ -41,12 +39,7 @@ def create_access_token():
     print(f"Stored Auth Record: {auth_record}")
 
     print(access_token)
-    # Redirect to /login page
-    # return redirect(url_for("login", access_token=access_token, profile_id=profile_id))
-    # redirect_url = url_for("login", access_token=access_token, profile_id=profile_id)
-    redirect_url = f"http://localhost:8002{url_for('login', access_token=access_token, profile_id=profile_id)}"
-    print(f"Redirecting to: {redirect_url}")  # Debugging line
-    return redirect(redirect_url)
+    return jsonify({"access_token": access_token, "profile_id": profile_id}), 200
 
 
 @app.route("/authenticate_token", methods=["POST"])
@@ -54,17 +47,11 @@ def authenticate_token():
     auth_data = request.json
     access_token = auth_data.get("access_token")
     profile_id = auth_data.get("profile_id")
-
     if not access_token or not profile_id:
         abort(400, description="Both access_token and profile_id are required")
-
-    # Query the Auth table to find a match for profile_id and access_token
     auth_record = db.session.query(Auth).filter(Auth.profile_id == profile_id, Auth.access_token == access_token).first()
-
     if not auth_record:
         abort(401, description="Invalid token or profile_id")
-
-    # Token is valid, proceed with authentication
     return jsonify({"message": "Authentication successful"})
 
 @app.route("/login")
