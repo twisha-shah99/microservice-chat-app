@@ -22,5 +22,5 @@
   </div>
 </form>
 
-<a href="/chatrooms" class="button">Back to Chatrooms</a>
+<a href="{{ url_for('chatrooms', profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="button">Back to Chatrooms</a>
 {% endblock %}

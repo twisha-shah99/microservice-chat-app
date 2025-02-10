@@ -3,7 +3,8 @@
 {% block content %}
 <h1>Chatrooms</h1>
 <!-- <a href="{{ url_for('create_chatroom') }}" class="create-chatroom-button">+ Create New Chatroom</a> -->
-<a href="{{ chatroom_service_url }}/create_chatroom" class="create-chatroom-button">+ Create New Chatroom</a>
+<!-- CHANGE HREF SO THEY KEEP THE PROFILE ID AND ACCESS TOKEN ACROSS CHANGED -->
+<a href="{{ url_for('create_chatroom', profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="create-chatroom-button">+ Create New Chatroom</a>
 
 <!-- Success Message -->
 <div id="success-message" class="success-popup">
@@ -22,18 +23,18 @@
   {% for room in rooms %}
   <li class="chatroom-item">
     <div class="chatroom-info">
-        <a href="/chatroom/{{ room.chatroom_id }}" class="chatroom-name">{{ room.chatroom_name }}</a>
+      <a href="{{ url_for('chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'), access_token=request.args.get('access_token')) }}" class="chatroom-name">{{ room.chatroom_name }}</a>
     </div>
     {% set member_ids = chatroomMembers | selectattr('chatroom_id', 'equalto', room.chatroom_id) | map(attribute='profile_id') | list %}
     <!-- <p>Member IDs for this chatroom: {{ member_ids }}</p> -->
     {% if current_user | int in member_ids %}
           <!-- User is already a member -->
-          <form action="{{ url_for('leave_chatroom', room_id=room.chatroom_id) }}#left-message" method="post" style="display:inline;">
+          <form action="{{ url_for('leave_chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'),access_token=request.args.get('access_token')) }}#left-message" method="post" style="display:inline;">
               <button type="submit" class="leave-button">Leave</button>
           </form>
       {% else %}
           <!-- User is not a member -->
-        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id) }}#success-message" method="post" style="display:inline;">
+        <form action="{{ url_for('join_chatroom', room_id=room.chatroom_id, profile_id=request.args.get('profile_id'),access_token=request.args.get('access_token')) }}#success-message" method="post" style="display:inline;">
             <button type="submit" class="join-button">Join</button>
         </form>
       {% endif %}

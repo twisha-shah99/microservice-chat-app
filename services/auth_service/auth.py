@@ -7,7 +7,7 @@ import yaml
 
 app = Flask(__name__)
 
-with open("services/auth_service/config/auth_config.yaml", "r") as file:
+with open("config/auth_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = config["database"]["uri"]
