@@ -3,7 +3,6 @@ from database import db
 from model import Chatroom, ChatroomMembers, ChatroomMessages
 import yaml
 import datetime
-from flask_wtf.csrf import CSRFProtect
 import requests
 
 with open("config/chatroom_config.yaml", "r") as file:
