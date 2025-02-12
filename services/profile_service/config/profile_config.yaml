@@ -4,7 +4,8 @@ database:
 
 flask:
   secret_key: 'ECE4150-Lab4'
+  port: 5004
 
 chatroom-service:
-  url: "localhost:5002"
+  uri: "sqlite:///chatrooms.db"
 

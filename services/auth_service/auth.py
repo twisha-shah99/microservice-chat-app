@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, url_for, abort
+from flask import Flask, request, jsonify, abort
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from database import db  
@@ -12,36 +12,25 @@ with open("config/auth_config.yaml", "r") as file:
 
 app.config["SQLALCHEMY_DATABASE_URI"] = config["database"]["uri"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config["database"]["track_modifications"]
-# Initialize the database
+
 db.init_app(app)
 
+port = config["flask"]["port"]
+
+# Create a new access token for a profile
 @app.route("/create_access_token", methods=["POST"])
 def create_access_token():
-
     profile_data = request.json
-    print("Creating access token...")
     profile_id = profile_data.get("profile_id")
     if not profile_id:
         abort(400, description="Missing profile_id")
-
-    # Generate access token
     access_token = str(uuid4())
-    print(f"Generated Access Token: {access_token}")
-
-    # Store in Auth database
     new_auth = Auth(profile_id=profile_id, access_token=access_token)
-    print(f"Saving new Auth: {new_auth}")
     db.session.add(new_auth)
     db.session.commit()
-    print("Commit success")
-
-    auth_record = db.session.query(Auth).filter_by(profile_id=profile_id).first()
-    print(f"Stored Auth Record: {auth_record}")
-
-    print(access_token)
     return jsonify({"access_token": access_token, "profile_id": profile_id}), 200
 
-
+# Authenticate an access token
 @app.route("/authenticate_token", methods=["POST"])
 def authenticate_token():
     auth_data = request.json
@@ -54,32 +43,22 @@ def authenticate_token():
         abort(401, description="Invalid token or profile_id")
     return jsonify({"message": "Authentication successful"})
 
+# Retrieve an existing access token for a profile
 @app.route("/retrieve_token", methods=["GET", "POST"])
 def retrieve_token():
-    print("retrieving...")
     auth_data = request.json
     profile_id = auth_data.get("profile_id")
-    # Ensure profile_id is provided
     if not profile_id:
         abort(400, description="profile_id is required")
 
-    print(profile_id)
-    # Retrieve the token associated with the profile_id
     auth_record = db.session.query(Auth).filter(Auth.profile_id == profile_id).first()
-    print(auth_record.access_token)
     if not auth_record:
         abort(404, description="No token found for the given profile_id")
 
-    # Return the found access_token
     return jsonify({"access_token": auth_record.access_token})
-
-@app.route("/login")
-def login():
-    # Placeholder for login page logic
-    return jsonify({"message": "Redirected to login page"})
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all() 
         print("Database Tables created for Profile Service!")
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    app.run(debug=True, host="0.0.0.0", port=port)

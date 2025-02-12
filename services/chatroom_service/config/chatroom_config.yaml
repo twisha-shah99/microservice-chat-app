@@ -3,8 +3,13 @@ database:
   track_modifications: false
 
 profile-service:
+  url: "localhost:5004"
+  uri: "sqlite:///profile.db"
+
+auth-service:
   url: "localhost:5001"
 
 flask:
   secret_key: 'ECE4150-Lab4'
+  port: 5003
 

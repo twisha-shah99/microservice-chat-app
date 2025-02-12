@@ -1,10 +1,7 @@
 from flask import Flask, request, jsonify, session, render_template, redirect, url_for, abort, make_response
-from flask_sqlalchemy import SQLAlchemy
 from database import db
 from model import Chatroom, ChatroomMembers, ChatroomMessages
 import yaml
-from flask_jwt_extended import jwt_required, JWTManager, get_jwt_identity, get_jwt
-import jwt as jtt
 import datetime
 from flask_wtf.csrf import CSRFProtect
 import requests
@@ -13,53 +10,39 @@ with open("config/chatroom_config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 app = Flask(__name__, template_folder="../../templates", static_folder="../../static")
+
 app.config["SQLALCHEMY_DATABASE_URI"] = config["database"]["uri"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config["database"]["track_modifications"]
 
+port = str(config["flask"]["port"])
 PROFILE_SERVICE_URL = config['profile-service']['url']
-CHATROOM_SERVICE_URL = "localhost:5002"
+CHATROOM_SERVICE_URL = "localhost:"+port
 
 SECRET_KEY = config['flask']['secret_key']
 app.secret_key = SECRET_KEY
 
 app.config['SQLALCHEMY_BINDS'] = {
-    'profile': 'sqlite:///profile.db',  # Profile database URI
+    'profile': config['profile-service']['uri'],  
 }
 
-app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-app.config["JWT_COOKIE_SECURE"] = False  # True if using HTTPS
-app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token"
-app.config['JWT_COOKIE_CSRF_PROTECT'] = False
-
-app.config['WTF_CSRF_ENABLED'] = False
-
-jwt = JWTManager(app)
-
-csrf = CSRFProtect(app)
-
-# Initialize the database
 db.init_app(app)
-
 
 @app.route("/", methods=['GET'])
 def home():
-    # Get profile id and access token
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    # redirect to chatrooms page when home is pushed
     return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
 
 @app.route('/create_chatroom', methods=['GET', 'POST'])
 def create_chatroom():
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
-    # check for profile id and access token
     if not profile_id or not access_token:
         print("Profile ID or Access Token missing.")
         abort(400, description="Both profile_id and access_token are required.")
 
     # Check for valid access token
-    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+    auth_response = requests.post("http://"+config['auth-service']['url']+"/authenticate_token", json={
         "access_token": access_token,
         "profile_id": profile_id
     })
@@ -68,7 +51,7 @@ def create_chatroom():
         return make_response(jsonify({"error": "Token authentication failed"}), 400)
     
     if request.method == 'POST':
-        # when submission to cerate chatroom
+        # when submission to create chatroom
         chatroom_name = request.form['chatroom_name']
         description = request.form['description']
 
@@ -88,7 +71,7 @@ def create_chatroom():
    
 @app.route('/chatrooms', methods=["GET", "POST"])
 def chatrooms():
-
+    print("inside chatrooms")
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
 
@@ -96,7 +79,7 @@ def chatrooms():
         abort(400, description="Both profile_id and access_token are required.")
 
     # verify token
-    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+    auth_response = requests.post("http://"+config['auth-service']['url']+"/authenticate_token", json={
         "access_token": access_token,
         "profile_id": profile_id
     })
@@ -105,7 +88,7 @@ def chatrooms():
         return make_response(jsonify({"error": "Token authentication failed"}), 400)
 
     username = ""
-    response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
+    response = requests.get(f'http://'+config['profile-service']['url']+'/get_username/{profile_id}')
     if response.status_code == 200:
         username = response.json().get('username')
 
@@ -127,12 +110,11 @@ def chatroom(room_id):
     profile_id = request.args.get("profile_id")
     access_token = request.args.get("access_token")
 
-
     if not profile_id or not access_token:
         print("Profile ID or Access Token missing.")
         abort(400, description="Both profile_id and access_token are required.")
 
-    auth_response = requests.post("http://localhost:8000/authenticate_token", json={
+    auth_response = requests.post("http://"+config['auth-service']['url']+"/authenticate_token", json={
         "access_token": access_token,
         "profile_id": profile_id
     })
@@ -145,7 +127,12 @@ def chatroom(room_id):
     # Fetch the chatroom members and check if the user is a member
     member_ids = ChatroomMembers.query.filter_by(chatroom_id=room_id).all()
     member_ids = [member.profile_id for member in member_ids]
-    
+
+    # if the user is not in the chatroom, return as is!
+    if int(profile_id) not in member_ids:
+        print("Error: You are not a member of this chatroom.")
+        return redirect(url_for('chatrooms', profile_id=profile_id, access_token=access_token))
+
     # Query to fetch messages with sender's username and profile ID
     messages = db.session.query(
         ChatroomMessages.message,
@@ -158,7 +145,7 @@ def chatroom(room_id):
         message_data.append({'message': message, 'timestamp': timestamp, 'user': sent_by})
 
     # get username
-    response = requests.get(f'http://localhost:5001/get_username/{profile_id}')
+    response = requests.get(f'http://'+config['profile-service']['url']+'/get_username/{profile_id}')
     if response.status_code == 200:
         username = response.json().get('username')
     else:
@@ -216,4 +203,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all() 
         print("Database Tables created for Chatroom Service!")
-    app.run(port=5002,debug=True)
+    app.run(port=port,debug=True)
